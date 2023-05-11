@@ -1,7 +1,7 @@
 import re
 
-from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QApplication, QTextEdit
-from PyQt5.QtGui import QColor, QTextFormat, QPainter, QTextCharFormat, QSyntaxHighlighter
+from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QApplication, QTextEdit, QVBoxLayout, QLabel
+from PyQt5.QtGui import QColor, QTextFormat, QPainter, QTextCharFormat, QSyntaxHighlighter, QFont
 from PyQt5.QtCore import QRect, pyqtSlot, Qt, QSize, QRegExp, QRegularExpression
 from PyQt5 import QtCore, QtGui, QtWidgets
 from matplotlib import pyplot as plt
@@ -24,7 +24,7 @@ class Highlighter(QSyntaxHighlighter):
         # Define highlighting rule with words with red color for input and output
         module_format = QTextCharFormat()
         module_format.setForeground(QColor("red"))
-        module_pattern = QRegExp("(?!//.+)(^|\s+)(input|output|parameter|import|`include|`timescale)($|\s+)")
+        module_pattern = QRegExp("(?!//.+)(^|\s+)(input|output|parameter|import|`include|`timescale|localparam)($|\s+)")
         self.highlighting_rules.append((module_pattern, module_format))
 
         # Define highlighting rule with words with red color for modules
@@ -36,7 +36,13 @@ class Highlighter(QSyntaxHighlighter):
         # Define highlighting rule with words with red color for always
         module_format = QTextCharFormat()
         module_format.setForeground(QColor("red"))
-        module_pattern = QRegExp("(?!//.+)(^|\s+)(always)@")
+        module_pattern = QRegExp("(?!//.+)(^|\s+)(always)\s*@")
+        self.highlighting_rules.append((module_pattern, module_format))
+
+        # Define highlighting rule with words with red color for assign
+        module_format = QTextCharFormat()
+        module_format.setForeground(QColor("red"))
+        module_pattern = QRegExp("(?!//.+)(^|\s+|\t+)(assign)\s+")
         self.highlighting_rules.append((module_pattern, module_format))
 
         # Define highlighting rule with words with red color for if
@@ -162,6 +168,22 @@ class CodeEditor(QPlainTextEdit):
         # self.cursorPositionChanged.connect(self.highlightCurrentLine)
         self.updateLineNumberAreaWidth(0)
         # self.highlightCurrentLine()
+        self.setToolTipDuration(0)
+        self.setMouseTracking(True)
+        self.line_written = None
+        self.cursorPositionChanged.connect(self.show_tool_tip)
+
+    def show_tool_tip(self):
+        cursor = self.textCursor()
+        line_number = cursor.blockNumber() + 1
+        if self.line_written:
+            if line_number in self.line_written:
+                tooltip_text = self.line_written[line_number]
+                QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), tooltip_text, self)
+
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        self.show_tool_tip()
 
     def lineNumberAreaPaintEvent(self, event):
         painter = QPainter(self.lineNumberArea)
@@ -175,6 +197,7 @@ class CodeEditor(QPlainTextEdit):
             if block.isVisible() and bottom >= event.rect().top():
                 number = str(blockNumber + 1)
                 painter.setPen(Qt.black)
+                painter.setFont(QFont('Consolas', 12))  # set font size here
                 painter.drawText(0, int(top), self.lineNumberArea.width(),
                                  self.fontMetrics().height(),
                                  Qt.AlignRight, number)
@@ -231,7 +254,7 @@ class WaveViewer(QtWidgets.QWidget):
         self.canvas = FigureCanvas(Figure(figsize=(10, 1)))
         vertical_layout = QtWidgets.QVBoxLayout()
         vertical_layout.addWidget(self.canvas)
-        self.canvas.axes = self.canvas.figure.add_subplot(111, position=[0, 0, 1, 1])
+        self.canvas.axes = self.canvas.figure.add_subplot(111, position=[0.2, 0, 1, 1])
         self.setLayout(vertical_layout)
         self.canvas.axes.get_yaxis().set_visible(False)
         self.canvas.axes.get_xaxis().set_visible(False)
@@ -240,6 +263,7 @@ class WaveViewer(QtWidgets.QWidget):
         self.canvas.axes.spines['right'].set_visible(False)
         self.canvas.axes.spines['left'].set_visible(False)
         self.canvas.axes.spines['bottom'].set_visible(False)
+
 
 
 if __name__ == '__main__':

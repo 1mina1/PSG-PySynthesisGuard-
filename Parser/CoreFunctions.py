@@ -1,27 +1,41 @@
 import re
 import string
 from functools import reduce
+from typing import Tuple, List, Any
 
 
-def get_in_out_signal_names(file: str) -> tuple[list, list, list, list, list, list]:
+def get_in_out_signal_names(file: str) -> tuple[
+    list[str], list[str], list[int | Any], list[int], list[str], list[str], list[int | Any], list[int], list[str], list[
+        str], list[int | Any], list[int]]:
     input_signals = []
     inputs_types = []
     input_size = []
+    input_lines = []
     output_signals = []
     output_types = []
     output_size = []
+    output_lines = []
+    internal_signals = []
+    internal_types = []
+    internal_size = []
+    internal_lines = []
     Parameters_dic = getParameters(file)
+    current_line_num = 0
     with open(file, 'r') as f:
         for line in f:
+            current_line_num += 1
             line = re.sub(r'//.*', '', line)
             line = re.sub(r'\n', '', line)
+            line = re.sub(r"\t", " ", line)
             matches_input = re.search("input\s+", line)
             matches_output = re.search("output\s+", line)
-            if matches_input or matches_output:
-                names = re.sub(" ", "", line)
+            matches_internal = re.search(r"(?<!([a-z]|[A-Z]|_))" + "(wire|logic|reg)\s+" + r"(?!([0-9]|_))", line)
+            if matches_input or matches_output or matches_internal:
+                names = re.sub(r"(?<!([a-z]|[A-Z]|_))" + "(wire|logic|reg)\s+" + r"(?!([0-9]|_))", "", line)
+                names = re.sub(" ", "", names)
                 names = re.sub(";", "", names)
                 names = re.sub("[\(\[].*?[\)\]]", "", names)
-                names = re.sub("(wire|logic|reg|input|output)", "", names)
+                names = re.sub(r"(?<!([a-z]|[A-Z]|_))" + "(wire|logic|reg|input|output)" + r"(?!([0-9]|_))", "", names)
                 names = names.split(",")
                 names = [x for x in names if x != ',']
                 names = [x for x in names if x != '']
@@ -42,17 +56,25 @@ def get_in_out_signal_names(file: str) -> tuple[list, list, list, list, list, li
                             Sig_size = re.sub(key, str(Parameters_dic[key]), Sig_size)
                     Sig_size = Sig_size.split(":")
                     Sig_size = eval(Sig_size[0]) - eval(Sig_size[1]) + 1
-            if matches_input:
+            if matches_internal and not (matches_input or matches_output):
+                for element in names:
+                    internal_signals.append(element)
+                    internal_types.append(Sig_type)
+                    internal_size.append(Sig_size)
+                    internal_lines.append(current_line_num)
+            elif matches_input:
                 for element in names:
                     input_signals.append(element)
                     inputs_types.append(Sig_type)
                     input_size.append(Sig_size)
+                    input_lines.append(current_line_num)
             elif matches_output:
                 for element in names:
                     output_signals.append(element)
                     output_types.append(Sig_type)
                     output_size.append(Sig_size)
-    return input_signals, inputs_types, input_size, output_signals, output_types, output_size
+                    output_lines.append(current_line_num)
+    return input_signals, inputs_types, input_size, input_lines, output_signals, output_types, output_size, output_lines, internal_signals, internal_types, internal_size, internal_lines
 
 
 def getParameters(file: str) -> dict:
@@ -62,34 +84,56 @@ def getParameters(file: str) -> dict:
         for line in f:
             line = re.sub(r'//.*', '', line)
             line = re.sub(r'\n', '', line)
-            parametersfound = re.search("parameter\s+", line)
+            line = re.sub(r"\t", " ", line)
+            parametersfound = re.search("(parameter|localparam)\s+", line)
+            line = re.sub("(\s|\t)", "", line)
             if parametersfound or notdone:
                 semicolon = re.search(";", line)
                 hash = re.search("(#|module)", line)
-                if not semicolon and not hash:
+                coma = re.search(",", line)
+                if not semicolon and not hash and coma:
                     notdone = 1
                 else:
                     notdone = 0
-                parameters = re.sub(r"module.*#\(", "", line)
-                parameters = re.sub(r"(\(|\))", "", parameters)
-                parameters = re.sub(r"parameter", "", parameters)
+                    line = re.sub(";", "", line)
+                parameters = re.sub(r"(module|\(|#)", "", line)
+                parameters = re.sub(r"(\(|\)|\[.*\])", "", parameters)
+                parameters = re.sub(r"(parameter|localparam)", "", parameters)
                 parameters = parameters.split(",")
                 parameters = [x for x in parameters if x != ',']
+                parameters = [x for x in parameters if x != '']
                 for parameter in parameters:
                     parameter = parameter.split("=")
                     parameter = [x for x in parameter if x != '=']
                     parameter[0] = re.sub(" ", "", parameter[0])
                     parameter[1] = re.sub(" ", "", parameter[1])
+                    cons_type = re.search(r"'(d|b|h)", parameter[1])
+                    if not cons_type:
+                        parameter[1] = "'d" + parameter[1]
+                        cons_type = re.search(r"'(d|b|h)", parameter[1])
+                    cons_type = cons_type.group()
+                    parameter[1] = re.sub(r"[1-9]*'(b|d|h)", "", parameter[1])
+                    if cons_type == "'b":
+                        parameter[1] = int(parameter[1], 2)
+                    elif cons_type == "'h":
+                        parameter[1] = int(parameter[1], 16)
+                    else:
+                        parameter[1] = int(parameter[1], 10)
                     Parameters_dic[parameter[0]] = int(parameter[1])
+                # if not coma:
+                #     break
     return Parameters_dic
 
 
 def get_paranthesis(Token_list: list):
     elements_between = []
     first_index = [i for i, x in enumerate(Token_list) if x == "("]
-    first_index = first_index[0]
-    last_index = [i for i, x in enumerate(Token_list) if x == ")"]
-    last_index = last_index[-1]
+    first_index = first_index[-1]
+    for index in range(len(Token_list)):
+        if index > first_index:
+            if Token_list[index] == ")":
+                last_index = index
+                break
 
     for index in range(len(Token_list)):
         if first_index < index < last_index:
@@ -200,7 +244,7 @@ def not_gate(a, size):
 def SpaceNum(line: str):
     new_string = ""
     sequence_start = 0
-    alpha = string.ascii_lowercase
+    alpha = string.ascii_lowercase + string.ascii_uppercase
 
     for i in range(len(line)):
         if sequence_start:
@@ -211,13 +255,15 @@ def SpaceNum(line: str):
                 new_string += line[i]
 
         elif line[i].isdigit() and line[i] == line[-1]:
-            new_string += " " + line[i]
-        elif line[i].isdigit() and (line[i + 1] != "'" and line[i - 1] not in alpha):
+            if line[i - 1] not in alpha and line[i - 1] != "_" and not line[i - 1].isdigit():
+                new_string += " " + line[i]
+            else:
+                new_string += line[i]
+        elif line[i].isdigit() and (
+                line[i + 1] != "'" and line[i - 1] not in alpha and line[i - 1] != "_" and not line[i - 1].isdigit()):
             new_string += " " + line[i]
             sequence_start = 1
 
         else:
             new_string += line[i]
     return new_string
-
-

@@ -1,0 +1,121 @@
+====================================================================
+(PSG) Lint Check Report
+Design : adderSections
+    Section 1 : Check Summary
+    Section 2 : Check Details
+====================================================================
+
+
+====================================================================
+Section 1 : Check Summary
+
+------------------
+| Errors (34) |
+------------------
+    Arithmetic over flow        :   17
+    Unreachable Blocks          :   1
+    Unreachable FSM State       :   1
+    Un-initialized Register     :   2
+    Multi-Driven Bus/Register   :   6
+    Non Full/Parallel Case      :   2
+    Infer Latch                 :   5
+====================================================================
+
+
+
+====================================================================
+Section 2 : Check Details
+	uninitialized register declared at line 10 in reg current_state
+	uninitialized register declared at line 10 in reg current_state_4
+	Arithmetic overflow error at line 14 in variable internOut
+	Non Full case statement at line 45 with variables may be the cause current_state 
+	Non Full case statement at line 55 with variables may be the cause in3 
+	unreachable finite state machine at line 76 because state 3 is unreachable
+	unreachable Block error at line 82 with variables may be the cause current_state_2 
+	multidriven block at line 83 in variable out1
+	multidriven block at line 86 in variable out1
+	multidriven block at line 93 in variable out3
+	latch infered at line 93 in variable out3
+	multidriven block at line 95 in variable out1
+	latch infered at line 95 in variable out1
+	multidriven block at line 99 in variable out1
+	multidriven block at line 100 in variable out2
+	latch infered at line 100 in variable out2
+	multidriven block at line 105 in variable out1
+	Arithmetic overflow error at line 106 in variable out2
+	multidriven block at line 106 in variable out2
+	Arithmetic overflow error at line 107 in variable out3
+	multidriven block at line 107 in variable out3
+	multidriven block at line 111 in variable out
+	multidriven block at line 113 in variable out
+	multidriven block at line 114 in variable out
+	multidriven block at line 115 in variable out3
+	multidriven block at line 117 in variable out4
+	multidriven block at line 121 in variable out
+	multidriven block at line 122 in variable out2
+	multidriven block at line 125 in variable out3
+	multidriven block at line 128 in variable out
+	latch infered at line 128 in variable out
+	multidriven block at line 130 in variable out2
+	Arithmetic overflow error at line 131 in variable out4
+	multidriven block at line 131 in variable out4
+	multidriven block at line 133 in variable out4
+	Arithmetic overflow error at line 136 in variable out4
+	multidriven block at line 136 in variable out4
+	Arithmetic overflow error at line 137 in variable out2
+	multidriven block at line 137 in variable out2
+	multidriven block at line 139 in variable out4
+	multidriven block at line 143 in variable out1
+	Arithmetic overflow error at line 144 in variable out2
+	multidriven block at line 144 in variable out2
+	Arithmetic overflow error at line 145 in variable out5
+	multidriven block at line 145 in variable out5
+	multidriven block at line 149 in variable out
+	multidriven block at line 151 in variable out
+	multidriven block at line 152 in variable out
+	multidriven block at line 153 in variable out5
+	multidriven block at line 155 in variable out4
+	multidriven block at line 159 in variable out
+	multidriven block at line 160 in variable out2
+	multidriven block at line 163 in variable out5
+	multidriven block at line 166 in variable out
+	latch infered at line 166 in variable out
+	multidriven block at line 168 in variable out2
+	Arithmetic overflow error at line 169 in variable out4
+	multidriven block at line 169 in variable out4
+	multidriven block at line 171 in variable out4
+	Arithmetic overflow error at line 174 in variable out4
+	multidriven block at line 174 in variable out4
+	Arithmetic overflow error at line 175 in variable out2
+	multidriven block at line 175 in variable out2
+	multidriven block at line 177 in variable out4
+	multidriven block at line 182 in variable out1
+	Arithmetic overflow error at line 183 in variable out2
+	multidriven block at line 183 in variable out2
+	Arithmetic overflow error at line 184 in variable out5
+	multidriven block at line 184 in variable out5
+	multidriven block at line 188 in variable out
+	multidriven block at line 190 in variable out
+	multidriven block at line 191 in variable out
+	multidriven block at line 192 in variable out5
+	multidriven block at line 194 in variable out4
+	multidriven block at line 198 in variable out
+	multidriven block at line 199 in variable out2
+	multidriven block at line 202 in variable out5
+	multidriven block at line 205 in variable out
+	latch infered at line 205 in variable out
+	multidriven block at line 207 in variable out2
+	Arithmetic overflow error at line 208 in variable out4
+	multidriven block at line 208 in variable out4
+	multidriven block at line 210 in variable out4
+	Arithmetic overflow error at line 213 in variable out4
+	multidriven block at line 213 in variable out4
+	Arithmetic overflow error at line 214 in variable out2
+	multidriven block at line 214 in variable out2
+	Arithmetic overflow error at line 215 in variable out9
+	latch infered at line 215 in variable out9
+	multidriven block at line 217 in variable out4
+====================================================================
+Finish
+====================================================================
+        
