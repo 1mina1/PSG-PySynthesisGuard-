@@ -210,6 +210,7 @@ class VerilogParser:
                 self.Module_Node.add_assign(ContinuousAssignment(WriteTo, eval(NewToken), TokenLine, "Blocking"))
             elif always:
                 NewToken = self.Token_obj_Replace(NewToken)
+                print(NewToken)
                 self.Module_Node.add_always(eval(NewToken))
                 print(NewToken)
             # for cont in self.Module_Node.continuous_assignment:

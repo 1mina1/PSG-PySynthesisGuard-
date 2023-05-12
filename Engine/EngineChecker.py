@@ -568,14 +568,14 @@ class Checks:
                 elif isinstance(Assignment, IfCondition):
                     self.check_infer_latch(Assignment, ParentLHS + Recursiveobject.TRUEOUTSIDE_LHS)
                 elif isinstance(Assignment, CaseStatement):
-                    self.check_infer_latch(Assignment, ParentLHS + Recursiveobject.TRUE_LHS)
+                    self.check_infer_latch(Assignment, ParentLHS + Recursiveobject.TRUEOUTSIDE_LHS)
             for Assignment in Recursiveobject.FalseStatements:
                 if isinstance(Assignment, ContinuousAssignment):
                     pass
                 elif isinstance(Assignment, IfCondition):
                     self.check_infer_latch(Assignment, ParentLHS + Recursiveobject.FALSEOUTSIDE_LHS)
                 elif isinstance(Assignment, CaseStatement):
-                    self.check_infer_latch(Assignment, ParentLHS + Recursiveobject.FALSE_LHS)
+                    self.check_infer_latch(Assignment, ParentLHS + Recursiveobject.FALSEOUTSIDE_LHS)
         elif isinstance(Recursiveobject, CaseStatement):
             difference = []
             for item in Recursiveobject.items:
@@ -621,6 +621,7 @@ class Checks:
         self.check_unreachable_blocks(self.main_node)
         self.check_non_full_parallel_case(self.main_node)
         self.check_unreachable_fSM_state(self.main_node)
+        print(self.error_panel)
 
 
 # Check = Checks("E:/EECE_2023_4thyear_Final_term/Automatic_cad_tools/Lint_Tool/example/adder.v")
