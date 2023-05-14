@@ -9,7 +9,7 @@ import numpy
 import matplotlib
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QTextCursor, QTextFormat, QColor, QPalette
+from PyQt5.QtGui import QFont, QTextCursor, QTextFormat, QColor, QPalette, QTextBlockFormat
 import os
 from pathlib import Path
 import qdarktheme
@@ -189,6 +189,7 @@ class MainWindow_UI(QtWidgets.QMainWindow):
         self.actionDark.triggered.connect(self.setDarkMode)
         self.actionLight.triggered.connect(self.setLightMode)
         self.actionStart.triggered.connect(self.start_simulation)
+        self.actionOpen_Project.triggered.connect(self.open_project)
         self.openFileThread.Editor_text.connect(self.PrintCode)
         self.openFileThread.Itsdone.connect(self.Highlight_everword)
         self.highlighter = Highlighter(self.svCodeEDitor.document())
@@ -232,6 +233,11 @@ class MainWindow_UI(QtWidgets.QMainWindow):
     def new_project(self):
         self.New_Project_ui.show()
 
+    def dump_data(self):
+        data_to_send = [self.design_files, self.directory_path, self.projectName, self.Results]
+        with open(self.directory_path + "/" + re.sub(" ", "", self.projectName) + ".PSG", 'wb') as temp_data:
+            pickle.dump(data_to_send, temp_data)
+
     def closeProject(self):
         self.terminal.clear()
         self.svCodeEDitor.clear()
@@ -245,7 +251,10 @@ class MainWindow_UI(QtWidgets.QMainWindow):
         self.charts.canvas.axes.clear()
         self.charts.canvas.draw()
         self.PD_LABEL.clear()
+        self.openFileThread.design_file = ""
         self.svCodeEDitor.line_written = []
+        self.svCodeEDitor.setExtraSelections([])
+        self.Results = []
 
     def show_msg_box(self, msg: str):
         msg_box = QtWidgets.QMessageBox()
@@ -267,7 +276,6 @@ class MainWindow_UI(QtWidgets.QMainWindow):
         msg_box.setIcon(QtWidgets.QMessageBox.Information)
         x = msg_box.exec_()
 
-
     def Highlight_everword(self, signal):
         if signal:
             self.selections = []
@@ -288,6 +296,8 @@ class MainWindow_UI(QtWidgets.QMainWindow):
 
     def handle_double_click(self, item):
         self.svCodeEDitor.clear()
+        self.svCodeEDitor.setExtraSelections([])
+        self.svCodeEDitor.line_written = []
         self.openFileThread.finish = 1
         self.openFileThread.exit()
         self.openFileThread.design_file = self.directory_path + "/" + item.text(0)
@@ -350,6 +360,7 @@ class MainWindow_UI(QtWidgets.QMainWindow):
                                     self.highlightLine(lines_3)
                         else:
                             self.highlightLine(lines_2)
+            self.dump_data()
         else:
             self.show_msg_box("you need to insert your design")
 
@@ -383,8 +394,49 @@ class MainWindow_UI(QtWidgets.QMainWindow):
     def Project_Directory(self, Path: str):
         self.directory_path = Path
 
+    def open_project(self):
+        project = QtWidgets.QFileDialog.getOpenFileNames(None)
+        if not project:
+            return
+        for prj in project[0]:
+            extension = re.sub(".+\.", "", prj)
+            if not (extension == "PSG"):
+                self.show_msg_box("this is not a PSG supported project")
+                return
+            with open(prj, 'rb') as temp_data:
+                self.design_files, self.directory_path, self.projectName, self.Results = pickle.load(temp_data)
+            self.PD_LABEL.setText(self.projectName + "-" + str(self.directory_path))
+            for file in self.design_files:
+                extension = re.sub(r".+\.", "", file)
+                a = QtWidgets.QTreeWidgetItem([str(file)])
+                if extension == "v":
+                    icon_v = QtGui.QIcon(absolutePath("Icons/verilog.png"))
+                    a.setIcon(0, icon_v)
+                else:
+                    icon_v = QtGui.QIcon(absolutePath("Icons/systemverilog.png"))
+                    a.setIcon(0, icon_v)
+                icon_v = QtGui.QIcon(absolutePath("Icons/notready.png"))
+                a.setIcon(1, icon_v)
+                self.work_space_tree.addTopLevelItem(a)
+
     def project_name(self, Name: str):
         self.PD_LABEL.setText(Name + "-" + str(self.directory_path))
+        self.projectName = Name
+        self.terminal.clear()
+        self.svCodeEDitor.clear()
+        self.design_files = []
+        self.texts = None
+        self.autotexts = None
+        self.work_space_tree.clear()
+        self.selections = []
+        self.charts.canvas.axes.clear()
+        self.charts.canvas.draw()
+        self.svCodeEDitor.line_written = []
+        self.openFileThread.design_file = ""
+        self.svCodeEDitor.setExtraSelections([])
+        self.svCodeEDitor.line_written = []
+        self.Results = []
+        self.dump_data()
 
     def Arrange_lines_errors(self, results):
         results_dic = {}
@@ -542,6 +594,7 @@ class MainWindow_UI(QtWidgets.QMainWindow):
                 self.work_space_tree.addTopLevelItem(a)
                 self.design_files.append(str(file_name + "." + extension))
                 os.system("copy " + file.replace("/", "\\") + " " + self.directory_path.replace("/", "\\"))
+                self.dump_data()
 
 
 def absolutePath(relative_path):
